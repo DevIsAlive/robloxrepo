@@ -12,15 +12,30 @@ interface SpinToWinPageProps {
 }
 
 const prizes = [
-  { amount: 500, color: "#1E40AF", label: "500" },
-  { amount: 1000, color: "#2563EB", label: "1000" },
-  { amount: 750, color: "#3B82F6", label: "750" },
-  { amount: 1500, color: "#1D4ED8", label: "1500" },
-  { amount: 250, color: "#1E3A8A", label: "250" },
-  { amount: 2000, color: "#312E81", label: "2000" },
-  { amount: 100, color: "#3730A3", label: "100" },
-  { amount: 5000, color: "#1E40AF", label: "5000" },
+  { amount: 100, color: "#1E40AF", label: "100", weight: 10 },
+  { amount: 200, color: "#2563EB", label: "200", weight: 10 },
+  { amount: 500, color: "#3B82F6", label: "500", weight: 8 },
+  { amount: 750, color: "#1D4ED8", label: "750", weight: 8 },
+  { amount: 1000, color: "#1E3A8A", label: "1000", weight: 6 },
+  { amount: 1500, color: "#312E81", label: "1500", weight: 4 },
+  { amount: 2000, color: "#3730A3", label: "2000", weight: 3 },
+  { amount: 5000, color: "#1E40AF", label: "5000", weight: 2 },
+  { amount: 10000, color: "#FFD700", label: "10000", weight: 1 }, // Gold color for 10,000 R$
 ]
+
+// Helper function for weighted random selection
+const getRandomWeightedPrizeIndex = (prizesArray: typeof prizes) => {
+  const totalWeight = prizesArray.reduce((sum, prize) => sum + prize.weight, 0)
+  let randomNum = Math.random() * totalWeight
+
+  for (let i = 0; i < prizesArray.length; i++) {
+    randomNum -= prizesArray[i].weight
+    if (randomNum <= 0) {
+      return i
+    }
+  }
+  return prizesArray.length - 1 // Fallback in case of floating point issues
+}
 
 export default function SpinToWinPage({ onNext, prizeAmount, setPrizeAmount }: SpinToWinPageProps) {
   const [hasSpun, setHasSpun] = useState(false)
@@ -29,6 +44,18 @@ export default function SpinToWinPage({ onNext, prizeAmount, setPrizeAmount }: S
   const [teaseRotation, setTeaseRotation] = useState(0)
   const [showSpinResult, setShowSpinResult] = useState(false)
   const [canClaimResult, setCanClaimResult] = useState(false)
+  const [starPositions, setStarPositions] = useState<Array<{ x: number[]; y: number[] }>>([])
+
+  // Initialize star positions on client mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const newStarPositions = Array.from({ length: 25 }).map(() => ({
+        x: [Math.random() * window.innerWidth, Math.random() * window.innerWidth],
+        y: [Math.random() * window.innerHeight, Math.random() * window.innerHeight],
+      }))
+      setStarPositions(newStarPositions)
+    }
+  }, [])
 
   // Tease animation on load
   useEffect(() => {
@@ -45,14 +72,18 @@ export default function SpinToWinPage({ onNext, prizeAmount, setPrizeAmount }: S
     setIsSpinning(true)
     setCanClaimResult(false)
 
-    const targetPrizeIndex = prizes.findIndex((p) => p.amount === 1000)
+    // Select a random prize based on weights
+    const targetPrizeIndex = prizes.findIndex((p) => p.amount === 10000)
+    const selectedPrize = prizes[targetPrizeIndex]
+
     const segmentAngle = 360 / prizes.length
-    const targetAngle = targetPrizeIndex * segmentAngle + segmentAngle / 2
+    // Calculate target angle to land in the middle of the selected segment
+    // Add extra spins to make it look like a full rotation
     const spins = 5
-    const finalRotation = spins * 360 + (360 - targetAngle)
+    const finalRotation = spins * 360 + (360 - (targetPrizeIndex * segmentAngle + segmentAngle / 2))
 
     setRotation(finalRotation)
-    setPrizeAmount(10000)
+    setPrizeAmount(selectedPrize.amount) // Set the prize amount based on the selected prize
 
     setTimeout(() => {
       setIsSpinning(false)
@@ -61,7 +92,7 @@ export default function SpinToWinPage({ onNext, prizeAmount, setPrizeAmount }: S
       setTimeout(() => {
         setCanClaimResult(true)
       }, 500)
-    }, 5000)
+    }, 5000) // Spin duration
   }
 
   const handleClaim = () => {
@@ -74,25 +105,30 @@ export default function SpinToWinPage({ onNext, prizeAmount, setPrizeAmount }: S
       {/* Changed justify-center to justify-start and added pt-12 */}
       {/* Animated Background Stars */}
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(25)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute"
-            animate={{
-              x: [Math.random() * window.innerWidth, Math.random() * window.innerWidth],
-              y: [Math.random() * window.innerHeight, Math.random() * window.innerHeight],
-              rotate: [0, 360],
-              scale: [0.5, 1, 0.5],
-            }}
-            transition={{
-              duration: Math.random() * 5 + 3,
-              repeat: Number.POSITIVE_INFINITY,
-              delay: Math.random() * 2,
-            }}
-          >
-            <Star className="text-white opacity-30" size={Math.random() * 12 + 6} />
-          </motion.div>
-        ))}
+        {starPositions.map(
+          (
+            pos,
+            i, // Use starPositions state
+          ) => (
+            <motion.div
+              key={i}
+              className="absolute"
+              animate={{
+                x: pos.x, // Use x from state
+                y: pos.y, // Use y from state
+                rotate: [0, 360],
+                scale: [0.5, 1, 0.5],
+              }}
+              transition={{
+                duration: Math.random() * 5 + 3,
+                repeat: Number.POSITIVE_INFINITY,
+                delay: Math.random() * 2,
+              }}
+            >
+              <Star className="text-white opacity-30" size={Math.random() * 12 + 6} />
+            </motion.div>
+          ),
+        )}
       </div>
       <ProgressBar currentStep={1} totalSteps={5} />
       <div className="flex flex-col items-center flex-1 z-10 w-full max-w-sm mt-8">
@@ -145,9 +181,9 @@ export default function SpinToWinPage({ onNext, prizeAmount, setPrizeAmount }: S
                 className={`trust-button ${
                   hasSpun
                     ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-800"
-                    : "bg-white hover:bg-gray-50 text-blue-600 border-blue-600"
+                    : "bg-white text-blue-600 border-blue-600" // Removed hover:bg-gray-50
                 } ${isSpinning ? "opacity-50 cursor-not-allowed" : ""}`}
-                whileHover={{ scale: isSpinning ? 1 : 1.05 }}
+                whileHover={{}} // Removed scale hover effect
                 whileTap={{ scale: isSpinning ? 1 : 0.95 }}
                 animate={
                   hasSpun
@@ -158,7 +194,7 @@ export default function SpinToWinPage({ onNext, prizeAmount, setPrizeAmount }: S
                           "0 10px 25px rgba(0,0,0,0.2)",
                         ],
                       }
-                    : {}
+                    : {} // Removed initial box-shadow animation
                 }
                 transition={{ duration: 1.5, repeat: hasSpun ? Number.POSITIVE_INFINITY : 0 }}
               >
@@ -167,7 +203,7 @@ export default function SpinToWinPage({ onNext, prizeAmount, setPrizeAmount }: S
                     SPINNING... ✨
                   </motion.span>
                 ) : hasSpun ? (
-                  "10,000 R$"
+                  `${prizeAmount} R$` // Display the actual prize amount here
                 ) : (
                   "SPIN TO WIN! 🚀"
                 )}
@@ -191,11 +227,12 @@ export default function SpinToWinPage({ onNext, prizeAmount, setPrizeAmount }: S
                 <motion.button
                   onClick={handleClaim}
                   disabled={!canClaimResult}
-                  className={`trust-button bg-white text-green-600 border-green-600 hover:bg-gray-100 ${
+                  className={`trust-button bg-white text-green-600 border-green-600 ${
+                    // Removed hover:bg-white
                     !canClaimResult ? "opacity-50 cursor-not-allowed" : ""
                   }`}
-                  whileHover={{ scale: canClaimResult ? 1.05 : 1 }}
-                  whileTap={{ scale: canClaimResult ? 1 : 0.95 }}
+                  whileHover={{}}
+                  whileTap={{ scale: canClaimResult ? 0.95 : 1 }}
                   animate={
                     !canClaimResult
                       ? {}

@@ -36,10 +36,13 @@ export default function GiftCardClaimPage({ prizeAmount, username }: GiftCardCla
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-400 to-blue-600 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-b from-blue-400 to-blue-600 flex flex-col items-center justify-start pt-4 p-4">
+      {" "}
+      {/* Changed justify-center to justify-start and added pt-12 */}
       <ProgressBar currentStep={5} totalSteps={5} />
-
-      <div className="flex flex-col items-center justify-center flex-1 w-full max-w-md">
+      <div className="flex flex-col items-center flex-1 w-full max-w-md mt-4">
+        {" "}
+        {/* Added mt-8 to shift content up */}
         <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} className="text-center w-full">
           <motion.div
             className="trust-card py-8 px-6 mb-8 flex flex-col items-center gap-y-6" // Use flex-col and gap-y for consistent spacing
@@ -82,9 +85,7 @@ export default function GiftCardClaimPage({ prizeAmount, username }: GiftCardCla
               onClick={handleClaimPrize}
               disabled={isExpired}
               className={`trust-button w-full ${
-                isExpired
-                  ? "bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 text-white border-blue-800"
+                isExpired ? "bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed" : "hover:bg-blue-600" // Added hover:bg-blue-600 to keep the color
               }`}
               whileHover={{ scale: isExpired ? 1 : 1.05 }}
               whileTap={{ scale: isExpired ? 1 : 0.95 }}

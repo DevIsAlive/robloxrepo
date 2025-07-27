@@ -86,7 +86,9 @@ export default function UsernamePage({ onNext, prizeAmount, username, setUsernam
               <motion.button
                 onClick={handleVerify}
                 disabled={!username.trim() || isVerifying}
-                className="trust-button w-full"
+                className={`trust-button w-full ${
+                  !username.trim() || isVerifying ? "" : "hover:bg-blue-600" // Added hover:bg-blue-600
+                }`}
                 whileHover={{ scale: username.trim() && !isVerifying ? 1.05 : 1 }}
                 whileTap={{ scale: username.trim() && !isVerifying ? 0.95 : 1 }}
                 animate={
@@ -148,7 +150,7 @@ export default function UsernamePage({ onNext, prizeAmount, username, setUsernam
               <p className="text-blue-500 font-bold mb-6">Account Verified!</p>
               <motion.button
                 onClick={handleConfirm}
-                className="trust-button w-full"
+                className="trust-button w-full hover:bg-blue-600" // Added hover:bg-blue-600
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 animate={{
